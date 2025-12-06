@@ -46,11 +46,15 @@ async function run() {
 
         app.post("/users", async(req, res) => {
             const user = req.body;
+            const query = {};
             user.role = "user";
             user.createdAt = new Date().toISOString();
             user.lastLogin = new Date().toISOString();
-            const email = user.email;
-            const userExists = await usersCollection.findOne({email});
+            if(user.email){
+                query.email = user.email;
+            }
+
+            const userExists = await usersCollection.findOne(query);
             if(userExists){
                 const updatedResult = await usersCollection.updateOne(query, {
                     $set: {
