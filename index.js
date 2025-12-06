@@ -1,7 +1,7 @@
 require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
-const { MongoClient, ServerApiVersion } = require('mongodb');
+const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
 const admin = require('firebase-admin');
 const port = process.env.PORT || 3000;
 const decoded = Buffer.from(process.env.FB_SERVICE_KEY, 'base64').toString('utf-8');
@@ -88,6 +88,19 @@ async function run() {
             }
 
             const result = await usersCollection.insertOne(user);
+            res.send(result);
+        });
+
+        app.patch("/user/:id/role", verifyJWT, verifyAdmin, async(req, res) => {
+            const {id} = req.params;
+            const {role} = req.body;
+            const query = {_id: new ObjectId(id)};
+            const updatedDoc = {
+                $set: {
+                    role: role
+                }
+            };
+            const result = await usersCollection.updateOne(query, updatedDoc);
             res.send(result);
         });
 
