@@ -54,6 +54,13 @@ async function run() {
             next();
         }
 
+        // get all users for admin
+        app.get('/users', verifyJWT, verifyAdmin, async (req, res) => {
+            const adminEmail = req.tokenEmail;
+            const result = await usersCollection.find({ email: { $ne: adminEmail } }).toArray();
+            res.send(result);
+        });
+
         app.post("/users", async(req, res) => {
             const user = req.body;
             const query = {};
