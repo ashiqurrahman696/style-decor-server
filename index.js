@@ -44,6 +44,16 @@ async function run() {
         const db = client.db("style_decors_db");
         const usersCollection = db.collection("users");
 
+        const verifyAdmin = async(req, res, next) => {
+            const email = req.tokenEmail;
+            const query = {email};
+            const user = await usersCollection.findOne(query);
+            if(!user || user.role !== "admin"){
+                return res.status(403).send({message: "Forbidden access"});
+            }
+            next();
+        }
+
         app.post("/users", async(req, res) => {
             const user = req.body;
             const query = {};
