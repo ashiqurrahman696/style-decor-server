@@ -107,7 +107,12 @@ async function run() {
 
         // decoration services apis
         app.get("/services", async(req, res) => {
-            const result = await servicesCollection.find().toArray();
+            const {searchText} = req.query;
+            const query = {};
+            if(searchText){
+                query.service_name = {$regex: searchText, $options: "i"};
+            }
+            const result = await servicesCollection.find(query).toArray();
             res.send(result);
         });
 
