@@ -116,6 +116,17 @@ async function run() {
             res.send(result);
         });
 
+        app.patch("/services/:id", verifyJWT, verifyAdmin, async (req, res) => {
+            const {id} = req.params;
+            const query = {_id: new ObjectId(id)};
+            const updatedService = req.body;
+            const update = {
+                $set: updatedService
+            }
+            const result = await servicesCollection.updateOne(query, update);
+            res.send(result);
+        });
+
         app.delete("/services/:id", verifyJWT, verifyAdmin, async (req, res) => {
             const {id} = req.params;
             const query = {_id: new ObjectId(id)};
