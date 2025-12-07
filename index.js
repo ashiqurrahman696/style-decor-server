@@ -110,6 +110,13 @@ async function run() {
             res.send(result);
         });
 
+        app.get("/service/:id", async(req, res) => {
+            const {id} = req.params;
+            const query = {_id: new ObjectId(id)};
+            const result = await servicesCollection.findOne(query);
+            res.send(result);
+        });
+
         app.post("/services", verifyJWT, verifyAdmin, async(req, res) => {
             const service = req.body;
             const result = await servicesCollection.insertOne(service);
