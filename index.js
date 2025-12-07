@@ -105,6 +105,11 @@ async function run() {
         });
 
         // decoration services apis
+        app.get("/services", verifyJWT, verifyAdmin, async(req, res) => {
+            const result = await servicesCollection.find().toArray();
+            res.send(result);
+        });
+
         app.post("/services", verifyJWT, verifyAdmin, async(req, res) => {
             const service = req.body;
             const result = await servicesCollection.insertOne(service);
