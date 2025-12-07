@@ -44,6 +44,7 @@ async function run() {
         const db = client.db("style_decors_db");
         const usersCollection = db.collection("users");
         const servicesCollection = db.collection("services");
+        const bookingsCollection = db.collection("bookings");
 
         const verifyAdmin = async(req, res, next) => {
             const email = req.tokenEmail;
@@ -138,6 +139,13 @@ async function run() {
             const {id} = req.params;
             const query = {_id: new ObjectId(id)};
             const result = await servicesCollection.deleteOne(query);
+            res.send(result);
+        });
+
+        // booking api
+        app.post("/booking", verifyJWT, async(req, res) => {
+            const booking = req.body;
+            const result = await bookingsCollection.insertOne(booking);
             res.send(result);
         });
 
