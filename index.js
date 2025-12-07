@@ -43,6 +43,7 @@ async function run() {
     try {
         const db = client.db("style_decors_db");
         const usersCollection = db.collection("users");
+        const servicesCollection = db.collection("services");
 
         const verifyAdmin = async(req, res, next) => {
             const email = req.tokenEmail;
@@ -54,14 +55,13 @@ async function run() {
             next();
         }
 
-        // get all users for admin
+        // user apis
         app.get('/users', verifyJWT, verifyAdmin, async (req, res) => {
             const adminEmail = req.tokenEmail;
             const result = await usersCollection.find({ email: { $ne: adminEmail } }).toArray();
             res.send(result);
         });
 
-        // get a user's role
         app.get('/user/role', verifyJWT, async (req, res) => {
             const result = await usersCollection.findOne({ email: req.tokenEmail })
             res.send({ role: result?.role })
@@ -101,6 +101,13 @@ async function run() {
                 }
             };
             const result = await usersCollection.updateOne(query, updatedDoc);
+            res.send(result);
+        });
+
+        // decoration services apis
+        app.post("/services", verifyJWT, verifyAdmin, async(req, res) => {
+            const service = req.body;
+            const result = await servicesCollection.insertOne(service);
             res.send(result);
         });
 
