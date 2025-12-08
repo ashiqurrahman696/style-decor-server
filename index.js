@@ -159,8 +159,11 @@ async function run() {
 
         // booking api
         app.get("/bookings", verifyJWT, async(req, res) => {
-            const result = await bookingsCollection.find().toArray();
-            res.send(result);
+            const { limit = 0, skip = 0 } = req.query;
+            const query = {};
+            const result = await bookingsCollection.find().limit(Number(limit)).skip(Number(skip)).toArray();
+            const count = await bookingsCollection.countDocuments(query);
+            res.send({result, total: count});
         });
 
         app.get("/user-bookings", verifyJWT, async(req, res) => {
