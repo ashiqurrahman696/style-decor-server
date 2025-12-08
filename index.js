@@ -160,6 +160,13 @@ async function run() {
             res.send(result);
         });
 
+        app.get("/user-bookings", verifyJWT, async(req, res) => {
+            const email = req.tokenEmail;
+            const query = {email};
+            const result = await bookingsCollection.find(query).toArray();
+            res.send(result);
+        });
+
         app.post("/booking", verifyJWT, async(req, res) => {
             const booking = req.body;
             booking.payment_status = "unpaid";
