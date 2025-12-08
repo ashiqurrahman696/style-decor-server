@@ -58,9 +58,12 @@ async function run() {
 
         // user apis
         app.get('/users', verifyJWT, verifyAdmin, async (req, res) => {
+            const {limit = 0, skip = 0} = req.query;
             const adminEmail = req.tokenEmail;
-            const result = await usersCollection.find({ email: { $ne: adminEmail } }).toArray();
-            res.send(result);
+            const query = {};
+            const result = await usersCollection.find({ email: { $ne: adminEmail } }).limit(Number(limit)).skip(Number(skip)).toArray();
+            const count = await usersCollection.countDocuments(query);
+            res.send({result, total: count});
         });
 
         app.get('/user/role', verifyJWT, async (req, res) => {
