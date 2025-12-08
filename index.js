@@ -150,6 +150,8 @@ async function run() {
         // booking api
         app.post("/booking", verifyJWT, async(req, res) => {
             const booking = req.body;
+            booking.payment_status = "unpaid";
+            booking.created_at = new Date().toISOString();
             const result = await bookingsCollection.insertOne(booking);
             res.send(result);
         });
