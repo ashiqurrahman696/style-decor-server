@@ -105,6 +105,13 @@ async function run() {
             res.send(result);
         });
 
+        // decorator apis
+        app.get("/decorators", async(req, res) => {
+            const query = {role: "decorator"};
+            const result = await usersCollection.find(query).toArray();
+            res.send(result);
+        });
+
         // decoration services apis
         app.get("/services", async(req, res) => {
             const {searchText} = req.query;
