@@ -73,7 +73,7 @@ async function run() {
             const query = {};
             user.role = "user";
             user.createdAt = new Date().toISOString();
-            user.lastLogin = new Date().toISOString();
+            user.last_loggedIn = new Date().toISOString();
             if(user.email){
                 query.email = user.email;
             }
