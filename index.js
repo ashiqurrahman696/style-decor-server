@@ -148,6 +148,11 @@ async function run() {
         });
 
         // booking api
+        app.get("/bookings", verifyJWT, async(req, res) => {
+            const result = await bookingsCollection.find().toArray();
+            res.send(result);
+        });
+
         app.post("/booking", verifyJWT, async(req, res) => {
             const booking = req.body;
             booking.payment_status = "unpaid";
