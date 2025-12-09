@@ -60,10 +60,13 @@ async function run() {
 
         // user apis
         app.get('/users', verifyJWT, verifyAdmin, async (req, res) => {
-            const {limit = 0, skip = 0} = req.query;
+            const {limit = 0, skip = 0, role, work_status} = req.query;
             const adminEmail = req.tokenEmail;
             const query = {};
-            const result = await usersCollection.find({ email: { $ne: adminEmail } }).limit(Number(limit)).skip(Number(skip)).toArray();
+            query.email = {$ne: adminEmail};
+            if(role) query.role = role;
+            if(work_status) query.work_status = work_status;
+            const result = await usersCollection.find(query).limit(Number(limit)).skip(Number(skip)).toArray();
             const count = await usersCollection.countDocuments(query);
             res.send({result, total: count});
         });
@@ -195,6 +198,30 @@ async function run() {
             }
             const result = await bookingsCollection.updateOne(query, update);
             res.send(result);
+        });
+
+        app.patch("/booking/:id/assigned", verifyJWT, verifyAdmin, async(req, res) => {
+            const {id} = req.params;
+            const query = {_id: new ObjectId(id)};
+            const {decoratorId, decoratorName, decoratorEmail} = req.body;
+            const update = {
+                $set: {
+                    service_status: "assigned",
+                    decoratorId: decoratorId,
+                    decoratorName: decoratorName,
+                    decoratorEmail: decoratorEmail
+                }
+            }
+            const result = await bookingsCollection.updateOne(query, update);
+
+            const decoratorQuery = {_id: new ObjectId(decoratorId)};
+            const decoratorUpdate = {
+                $set: {
+                    work_status: "in_service"
+                }
+            }
+            const decoratorResult = await usersCollection.updateOne(decoratorQuery, decoratorUpdate);
+            res.send(decoratorResult);
         });
 
         app.delete("/booking/:id", verifyJWT, async(req, res) => {
