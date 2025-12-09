@@ -58,6 +58,16 @@ async function run() {
             next();
         }
 
+        const verifyDecorator = async(req, res, next) => {
+            const email = req.tokenEmail;
+            const query = {email};
+            const user = await usersCollection.findOne(query);
+            if(!user || user.role !== "decorator"){
+                return res.status(403).send({message: "Forbidden access"});
+            }
+            next();
+        }
+
         // user apis
         app.get('/users', verifyJWT, verifyAdmin, async (req, res) => {
             const {limit = 0, skip = 0, role, work_status} = req.query;
@@ -129,6 +139,16 @@ async function run() {
                 query.service_name = {$regex: searchText, $options: "i"};
             }
             const result = await servicesCollection.find(query).toArray();
+            res.send(result);
+        });
+
+        app.get("/services/decorators", verifyJWT, verifyDecorator, async(req, res) => {
+            const {decoratorEmail} = req.query;
+            const query = {};
+            if(decoratorEmail){
+                query.decoratorEmail = decoratorEmail;
+            }
+            const result = await bookingsCollection.find(query).toArray();
             res.send(result);
         });
 
