@@ -103,7 +103,8 @@ async function run() {
             const query = {_id: new ObjectId(id)};
             const updatedDoc = {
                 $set: {
-                    role: role
+                    role: role,
+                    work_status: "available"
                 }
             };
             const result = await usersCollection.updateOne(query, updatedDoc);
@@ -161,9 +162,10 @@ async function run() {
 
         // booking api
         app.get("/bookings", verifyJWT, async(req, res) => {
-            const { limit = 0, skip = 0 } = req.query;
+            const { limit = 0, skip = 0, service_status } = req.query;
             const query = {};
-            const result = await bookingsCollection.find().limit(Number(limit)).skip(Number(skip)).toArray();
+            if(service_status) query.service_status = service_status;
+            const result = await bookingsCollection.find(query).limit(Number(limit)).skip(Number(skip)).toArray();
             const count = await bookingsCollection.countDocuments(query);
             res.send({result, total: count});
         });
