@@ -152,6 +152,19 @@ async function run() {
             res.send(result);
         });
 
+        app.patch("/services/decorators/:id", verifyJWT, verifyDecorator, async(req, res) => {
+            const {id} = req.params;
+            const {service_status} = req.body;
+            const query = {_id: new ObjectId(id)};
+            const update = {
+                $set: {
+                    service_status: service_status
+                }
+            };
+            const result = await bookingsCollection.updateOne(query, update);
+            res.send(result);
+        });
+
         app.get("/service/:id", async(req, res) => {
             const {id} = req.params;
             const query = {_id: new ObjectId(id)};
