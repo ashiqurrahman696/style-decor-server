@@ -3,6 +3,7 @@ const express = require('express');
 const cors = require('cors');
 const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
 const admin = require('firebase-admin');
+const stripe = require('stripe')(process.env.STRIPE_SECRET);
 const port = process.env.PORT || 3000;
 const decoded = Buffer.from(process.env.FB_SERVICE_KEY, 'base64').toString('utf-8');
 const serviceAccount = JSON.parse(decoded);
@@ -45,6 +46,7 @@ async function run() {
         const usersCollection = db.collection("users");
         const servicesCollection = db.collection("services");
         const bookingsCollection = db.collection("bookings");
+        const paymentsCollection = db.collection("payments");
 
         const verifyAdmin = async(req, res, next) => {
             const email = req.tokenEmail;
@@ -197,6 +199,73 @@ async function run() {
             const query = {_id: new ObjectId(id)};
             const result = await bookingsCollection.deleteOne(query);
             res.send(result);
+        });
+
+        // payment apis
+        app.post("/create-checkout-session", async(req, res) => {
+            const paymentInfo = req.body;
+            const amount = paymentInfo.cost * 100;
+            const session = await stripe.checkout.sessions.create({
+                line_items: [
+                    {
+                        price_data: {
+                            currency: "USD",
+                            unit_amount: amount,
+                            product_data: {
+                                name: paymentInfo.service_name,
+                            }
+                        },
+                        quantity: 1,
+                    },
+                ],
+                customer_email: paymentInfo.customer_email,
+                mode: "payment",
+                metadata: {
+                    bookingId: paymentInfo.bookingId,
+                    serviceName: paymentInfo.service_name,
+                    customer: paymentInfo.customer_email,
+                },
+                success_url: `${process.env.CLIENT_DOMAIN}/dashboard/payment-success?session_id={CHECKOUT_SESSION_ID}`,
+                cancel_url: `${process.env.CLIENT_DOMAIN}/dashboard/payment-cancelled`,
+            });
+            res.send({url: session.url});
+        });
+
+        app.patch("/payment-success", async(req, res) => {
+            const {sessionId} = req.body;
+            const session = await stripe.checkout.sessions.retrieve(sessionId);
+
+            const query = {_id: new ObjectId(session.metadata.bookingId)};
+            const update = {
+                $set: {
+                    payment_status: "paid"
+                }
+            }
+            const booking = await bookingsCollection.updateOne(query, update);
+            const paymentExist = await paymentsCollection.findOne({
+                transactionId: session.payment_intent,
+            });
+            if(paymentExist){
+                return res.send({
+                    message: 'payment already exists',
+                });
+            }
+            if (session.status === "complete" && booking && !paymentExist){
+                const payment = {
+                    bookingId: session.metadata.bookingId,
+                    service_name: session.metadata.serviceName,
+                    amount: session.amount_total / 100,
+                    customer: session.metadata.customer,
+                    transactionId: session.payment_intent,
+                    paymentStatus: session.payment_status,
+                    paid_at: new Date(),
+                };
+                const paymentResult = await paymentsCollection.insertOne(payment);
+                return res.send({
+                    transactionId: session.payment_intent,
+                    paymentId: paymentResult.insertedId,
+                });
+            }
         });
 
         // Send a ping to confirm a successful connection
