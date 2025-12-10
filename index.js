@@ -162,6 +162,17 @@ async function run() {
                 }
             };
             const result = await bookingsCollection.updateOne(query, update);
+            if(service_status === "completed"){
+                const decoratorEmail = req.tokenEmail;
+                const decoratorQuery = { email: decoratorEmail };
+                const updateDecorator = {
+                    $set: {
+                        work_status: "available"
+                    }
+                }
+                const decoratorResult = await usersCollection.updateOne(decoratorQuery, updateDecorator);
+                return res.send(decoratorResult);
+            }
             res.send(result);
         });
 
