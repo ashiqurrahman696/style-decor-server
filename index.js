@@ -230,10 +230,12 @@ async function run() {
 
         // booking api
         app.get("/bookings", verifyJWT, async(req, res) => {
-            const { limit = 0, skip = 0, service_status } = req.query;
+            const { limit = 0, skip = 0, service_status, sort = "booking_date", order = "desc" } = req.query;
+            const sortOption = {};
+            sortOption[sort] = order === "asc" ? 1 : -1;
             const query = {};
             if(service_status) query.service_status = service_status;
-            const result = await bookingsCollection.find(query).limit(Number(limit)).skip(Number(skip)).toArray();
+            const result = await bookingsCollection.find(query).sort(sortOption).limit(Number(limit)).skip(Number(skip)).toArray();
             const count = await bookingsCollection.countDocuments(query);
             res.send({result, total: count});
         });
