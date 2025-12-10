@@ -152,6 +152,27 @@ async function run() {
             res.send(result);
         });
 
+        app.get("/services/booked", async(req, res) => {
+            const pipeline = [
+                {
+                    $group: {
+                        _id: "$service_name",
+                        count: {
+                            $sum: 1
+                        }
+                    },
+                },
+                {
+                    $project: {
+                        service_name: "$_id",
+                        count: 1
+                    }
+                }
+            ];
+            const result = await bookingsCollection.aggregate(pipeline).toArray();
+            res.send(result);
+        });
+
         app.patch("/services/decorators/:id", verifyJWT, verifyDecorator, async(req, res) => {
             const {id} = req.params;
             const {service_status} = req.body;
